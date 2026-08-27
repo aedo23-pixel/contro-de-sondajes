@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control y Novedades de Sondaje</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { background-color: #eceff1; margin: 0; padding: 20px; color: #2c3e50; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        
+        h1, h2 { text-align: center; color: #1a252f; margin-bottom: 10px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        .seccion-titulo { font-weight: bold; color: #00838f; border-bottom: 2px solid #b2ebf2; padding-bottom: 5px; margin: 15px 0 10px 0; grid-column: 1 / -1; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+        
+        .form-group { display: flex; flex-direction: column; margin-bottom: 10px; }
+        label { font-weight: 600; font-size: 0.85em; margin-bottom: 4px; text-transform: uppercase; color: #546e7a; }
+        input, select, textarea { padding: 8px 10px; border: 1px solid #cfd8dc; border-radius: 4px; font-size: 0.95em; }
+        input:focus, select:focus, textarea:focus { border-color: #29b6f6; outline: none; }
+        
+        .btn { background-color: #27ae60; color: white; border: none; padding: 12px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%; transition: background 0.2s; }
+        .btn:hover { background-color: #219150; }
+        .btn-secundario { background-color: #00838f; margin-top: 10px; }
+        .btn-secundario:hover { background-color: #006064; }
+        .btn-copiar { background-color: #78909c; margin-bottom: 10px; }
+        .btn-copiar:hover { background-color: #607d8b; }
+        
+        .btn-accion { padding: 4px 8px; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8em; color: white; margin-right: 2px; }
+        .btn-editar { background-color: #f39c12; }
+        .btn-eliminar { background-color: #e74c3c; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
+        th, td { border: 1px solid #cfd8dc; padding: 10px; text-align: left; }
+        th { background-color: #37474f; color: white; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+
+        .output-box { background: #263238; color: #eceff1; padding: 15px; border-radius: 6px; font-family: monospace; white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Gestión de Turnos y Sondajes</h1>
+
+    <!-- 1. ENCABEZADO DEL TURNO (CAMBIO DE FECHA) -->
+    <div class="card">
+        <h2>Datos Generales del Turno</h2>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>Fecha del Reporte:</label>
+                <input type="date" id="fechaReporte">
+            </div>
+            <div class="form-group">
+                <label>Jefe de Faena:</label>
+                <input type="text" id="jefeFaena" placeholder="Ej: César Barraza">
+            </div>
+            <div class="form-group">
+                <label>Jefes de Turno:</label>
+                <input type="text" id="jefesTurno" placeholder="Ej: Fernando Martínez - José Ponce">
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. REGISTRO DE MÁQUINA / POZO (CUALQUIERA PUEDE LLENAR) -->
+    <div class="card">
+        <h2>Registrar Novedad de Pozo</h2>
+        <button type="button" id="btnCargarAnterior" class="btn btn-copiar">Copiar datos del último pozo guardado</button>
+        
+        <form id="formPozo">
+            <input type="hidden" id="editIndex" value="-1">
+
+            <div class="grid-4">
+                <div class="seccion-titulo">Datos del Pozo</div>
+                <div class="form-group">
+                    <label>Equipo / Máquina:</label>
+                    <input type="text" id="equipo" placeholder="Ej: Lf160-190" required>
+                </div>
+                <div class="form-group">
+                    <label>Pozo (MHDD):</label>
+                    <input type="text" id="pozo" placeholder="Ej: MHDD0692" required>
+                </div>
+                <div class="form-group">
+                    <label>Inclinación (°):</label>
+                    <input type="text" id="inclinacion" placeholder="-70">
+                </div>
+                <div class="form-group">
+                    <label>Azimut (°):</label>
+                    <input type="text" id="azimut" placeholder="90">
+                </div>
+                <div class="form-group">
+                    <label>Programado (m):</label>
+                    <input type="number" id="programado" placeholder="1697">
+                </div>
+                <div class="form-group">
+                    <label>Diámetro:</label>
+                    <input type="text" id="diametro" placeholder="PQ3 / HQ3 / NQ3">
+                </div>
+
+                <div class="seccion-titulo">Información de Corona</div>
+                <div class="form-group">
+                    <label>Corona (Tipo/Color):</label>
+                    <input type="text" id="corona" placeholder="Ej: Yellow OS / Grey OS">
+                </div>
+                <div class="form-group">
+                    <label>Corona Instalada (m):</label>
+                    <input type="number" step="0.01" id="coronaInstalada" placeholder="Ej: 444.10">
+                </div>
+
+                <div class="seccion-titulo">Revestimiento (Casings)</div>
+                <div class="form-group">
+                    <label>Casing PWT (m):</label>
+                    <input type="number" step="0.01" id="casingPWT" placeholder="Ej: 21.00">
+                </div>
+                <div class="form-group">
+                    <label>Casing HWT (m):</label>
+                    <input type="number" step="0.01" id="casingHWT" placeholder="Ej: 294.20">
+                </div>
+                <div class="form-group">
+                    <label>Casing NWT (m):</label>
+                    <input type="number" step="0.01" id="casingNWT" placeholder="Ej: 801.50">
+                </div>
+
+                <div class="seccion-titulo">Avanzado y Estado</div>
+                <div class="form-group">
+                    <label>Inicio (m):</label>
+                    <input type="number" step="0.01" id="inicio" placeholder="491.30" required>
+                </div>
+                <div class="form-group">
+                    <label>Fondo (m):</label>
+                    <input type="number" step="0.01" id="fondo" placeholder="501.90" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Observaciones:</label>
+                <textarea id="observaciones" rows="3" placeholder="Detalle técnico u operativo del turno..."></textarea>
+            </div>
+
+            <button type="submit" id="btnGuardar" class="btn">Guardar Registro de Pozo</button>
+        </form>
+    </div>
+
+    <!-- 3. TABLA CONSOLIDADA -->
+    <div class="card">
+        <h2>Resumen del Turno</h2>
+        <p><strong>Avance Total acumulado: <span id="totalAvance" style="color:#27ae60;">0.00</span> m</strong></p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Equipo</th>
+                    <th>Pozo</th>
+                    <th>Diámetro</th>
+                    <th>Inicio</th>
+                    <th>Fondo</th>
+                    <th>Avance</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tablaRegistros">
+                <!-- Se poblará dinámicamente -->
+            </tbody>
+        </table>
+        
+        <button id="btnGenerarTexto" class="btn btn-secundario">Generar Informe para Copiar</button>
+    </div>
+
+    <!-- 4. REPORTE EN TEXTO PLANO -->
+    <div class="card" id="seccionReporte" style="display:none;">
+        <h2>Texto de Salida Formateado</h2>
+        <div class="output-box" id="salidaTexto"></div>
+    </div>
+</div>
+
+<script>
+    // --- CONFIGURACIÓN DE SEGURIDAD ---
+    // Cambia "admin123" por la clave de tu elección
+    const CLAVE_ADMIN = "Omar23";
+
+    // --- LÓGICA Y PROGRAMACIÓN EN JAVASCRIPT ---
+
+    let todosLosReportes = JSON.parse(localStorage.getItem('bd_sondajes')) || {};
+
+    const fechaInput = document.getElementById('fechaReporte');
+    const formPozo = document.getElementById('formPozo');
+    const editIndexInput = document.getElementById('editIndex');
+    const tablaRegistros = document.getElementById('tablaRegistros');
+    const totalAvanceElem = document.getElementById('totalAvance');
+    const salidaTexto = document.getElementById('salidaTexto');
+    const seccionReporte = document.getElementById('seccionReporte');
+
+    fechaInput.valueAsDate = new Date();
+
+    // Función auxilar para pedir clave antes de editar o eliminar
+    function validarAcceso() {
+        const claveIngresada = prompt("Ingresa la contraseña de administrador para autorizar esta acción:");
+        if (claveIngresada === CLAVE_ADMIN) {
+            return true;
+        } else if (claveIngresada !== null) {
+            alert("Contraseña incorrecta. Acceso denegado.");
+        }
+        return false;
+    }
+
+    function getRegistrosActuales() {
+        const fecha = fechaInput.value;
+        return todosLosReportes[fecha] || [];
+    }
+
+    function setRegistrosActuales(lista) {
+        const fecha = fechaInput.value;
+        todosLosReportes[fecha] = lista;
+        localStorage.setItem('bd_sondajes', JSON.stringify(todosLosReportes));
+    }
+
+    fechaInput.addEventListener('change', () => {
+        actualizarTabla();
+        seccionReporte.style.display = 'none';
+    });
+
+    // Guardar nuevo registro (abierto a todos) o aplicar edición (requiere clave)
+    formPozo.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const editIndex = parseInt(editIndexInput.value);
+
+        // Si estamos EDITANDO un registro existente, requerir clave
+        if (editIndex !== -1) {
+            if (!validarAcceso()) {
+                return; // Aborta el guardado si la clave falla
+            }
+        }
+
+        const inicioVal = parseFloat(document.getElementById('inicio').value) || 0;
+        const fondoVal = parseFloat(document.getElementById('fondo').value) || 0;
+        const avanceCalculado = (fondoVal >= inicioVal) ? (fondoVal - inicioVal) : 0;
+
+        const nuevoPozo = {
+            equipo: document.getElementById('equipo').value,
+            pozo: document.getElementById('pozo').value,
+            inclinacion: document.getElementById('inclinacion').value,
+            azimut: document.getElementById('azimut').value,
+            programado: document.getElementById('programado').value,
+            diametro: document.getElementById('diametro').value,
+            corona: document.getElementById('corona').value,
+            coronaInstalada: document.getElementById('coronaInstalada').value,
+            casingPWT: document.getElementById('casingPWT').value,
+            casingHWT: document.getElementById('casingHWT').value,
+            casingNWT: document.getElementById('casingNWT').value,
+            inicio: inicioVal.toFixed(2),
+            fondo: fondoVal.toFixed(2),
+            avance: avanceCalculado.toFixed(2),
+            observaciones: document.getElementById('observaciones').value
+        };
+
+        let registros = getRegistrosActuales();
+
+        if (editIndex === -1) {
+            registros.push(nuevoPozo);
+        } else {
+            registros[editIndex] = nuevoPozo;
+            editIndexInput.value = "-1";
+            document.getElementById('btnGuardar').textContent = "Guardar Registro de Pozo";
+        }
+
+        setRegistrosActuales(registros);
+        formPozo.reset();
+        actualizarTabla();
+    });
+
+    document.getElementById('btnCargarAnterior').addEventListener('click', () => {
+        const registros = getRegistrosActuales();
+        if (registros.length === 0) {
+            alert('No hay registros previos en este día para copiar.');
+            return;
+        }
+        const ultimo = registros[registros.length - 1];
+        document.getElementById('equipo').value = ultimo.equipo;
+        document.getElementById('pozo').value = ultimo.pozo;
+        document.getElementById('inclinacion').value = ultimo.inclinacion;
+        document.getElementById('azimut').value = ultimo.azimut;
+        document.getElementById('programado').value = ultimo.programado;
+        document.getElementById('diametro').value = ultimo.diametro;
+        document.getElementById('corona').value = ultimo.corona;
+        document.getElementById('casingPWT').value = ultimo.casingPWT;
+        document.getElementById('casingHWT').value = ultimo.casingHWT;
+        document.getElementById('casingNWT').value = ultimo.casingNWT;
+        document.getElementById('inicio').value = ultimo.fondo;
+    });
+
+    function actualizarTabla() {
+        tablaRegistros.innerHTML = '';
+        let sumaAvance = 0;
+        const registros = getRegistrosActuales();
+
+        registros.forEach((reg, index) => {
+            sumaAvance += parseFloat(reg.avance);
+
+            const fila = document.createElement('tr');
+            fila.innerHTML = `
+                <td><strong>${reg.equipo}</strong></td>
+                <td>${reg.pozo}</td>
+                <td>${reg.diametro || '-'}</td>
+                <td>${reg.inicio} m</td>
+                <td>${reg.fondo} m</td>
+                <td><strong>${reg.avance} m</strong></td>
+                <td>
+                    <button class="btn-accion btn-editar" onclick="editarRegistro(${index})">Editar</button>
+                    <button class="btn-accion btn-eliminar" onclick="eliminarRegistro(${index})">Eliminar</button>
+                </td>
+            `;
+            tablaRegistros.appendChild(fila);
+        });
+
+        totalAvanceElem.textContent = sumaAvance.toFixed(2);
+    }
+
+    // Función para editar protegida por clave
+    window.editarRegistro = function(index) {
+        if (!validarAcceso()) return;
+
+        const registros = getRegistrosActuales();
+        const reg = registros[index];
+
+        document.getElementById('equipo').value = reg.equipo;
+        document.getElementById('pozo').value = reg.pozo;
+        document.getElementById('inclinacion').value = reg.inclinacion;
+        document.getElementById('azimut').value = reg.azimut;
+        document.getElementById('programado').value = reg.programado;
+        document.getElementById('diametro').value = reg.diametro;
+        document.getElementById('corona').value = reg.corona;
+        document.getElementById('coronaInstalada').value = reg.coronaInstalada;
+        document.getElementById('casingPWT').value = reg.casingPWT;
+        document.getElementById('casingHWT').value = reg.casingHWT;
+        document.getElementById('casingNWT').value = reg.casingNWT;
+        document.getElementById('inicio').value = reg.inicio;
+        document.getElementById('fondo').value = reg.fondo;
+        document.getElementById('observaciones').value = reg.observaciones;
+
+        editIndexInput.value = index;
+        document.getElementById('btnGuardar').textContent = "Actualizar Registro (Modo Edición)";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // Función para eliminar protegida por clave
+    window.eliminarRegistro = function(index) {
+        if (!validarAcceso()) return;
+
+        if (confirm('¿Estás seguro de que deseas eliminar este registro?')) {
+            let registros = getRegistrosActuales();
+            registros.splice(index, 1);
+            setRegistrosActuales(registros);
+            actualizarTabla();
+        }
+    };
+
+    document.getElementById('btnGenerarTexto').addEventListener('click', () => {
+        const registros = getRegistrosActuales();
+        if (registros.length === 0) {
+            alert('Por favor agrega al menos un pozo en la fecha seleccionada.');
+            return;
+        }
+
+        const fechaRaw = fechaInput.value;
+        const partesFecha = fechaRaw.split('-');
+        const fechaFormateada = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;
+
+        const jefeFaena = document.getElementById('jefeFaena').value || 'Sin información';
+        const jefesTurno = document.getElementById('jefesTurno').value || 'Sin información';
+
+        let texto = `Buenos días, novedades turno noche\n`;
+        texto += `▪️︎ Fecha: ${fechaFormateada}\n`;
+        texto += `▪️︎ Jefe de faena: ${jefeFaena}\n`;
+        texto += `▪️︎ Jefe de turno: ${jefesTurno}\n\n`;
+
+        registros.forEach(reg => {
+            texto += `${reg.equipo}\n`;
+            texto += `${reg.pozo}\n`;
+            if (reg.inclinacion) texto += `Inclinación: ${reg.inclinacion}\n`;
+            if (reg.azimut) texto += `Azimut: ${reg.azimut}\n`;
+            if (reg.programado) texto += `Programado: ${reg.programado}\n`;
+            if (reg.diametro) texto += `Diámetro: ${reg.diametro}\n`;
+            if (reg.corona) texto += `Corona: ${reg.corona}\n`;
+            if (reg.coronaInstalada) texto += `Corona instalada: ${parseFloat(reg.coronaInstalada).toFixed(2)}\n`;
+            if (reg.casingPWT) texto += `Casing PWT: ${parseFloat(reg.casingPWT).toFixed(2)}\n`;
+            if (reg.casingHWT) texto += `Casing HWT: ${parseFloat(reg.casingHWT).toFixed(2)}\n`;
+            if (reg.casingNWT) texto += `Casing NWT: ${parseFloat(reg.casingNWT).toFixed(2)}\n`;
+            
+            texto += `Inicio: ${reg.inicio}\n`;
+            texto += `Fondo: ${reg.fondo}\n`;
+            texto += `Avance: ${reg.avance}\n`;
+            texto += `Observaciones:\n${reg.observaciones}\n\n`;
+        });
+
+        texto += `Turno sin incidentes.`;
+
+        salidaTexto.textContent = texto;
+        seccionReporte.style.display = 'block';
+    });
+
+    actualizarTabla();
+</script>
+
+</body>
+</html>
